@@ -109,7 +109,7 @@ myPalindrome l = l ++ reverse l
 
 --Create a function that sorts a list of lists based on the length of each sublist.
 mySortByLength :: [[a]] -> [[a]]
-mySortByLength = L.sortBy (O.comparing length)
+mySortByLength = L.sortBy $ O.comparing length
 
 --Define a function that joins a list of lists together using a separator value.
 intersperse :: a -> [[a]] -> [a]
@@ -172,7 +172,7 @@ grahamScan points = firstPoint : scan sortedPoints
     isLeftTurn a b c     = calculateDirection a b c == LeftTurn
     firstPoint           = head pointsByYValue
     pointsByYValue       = L.sortBy (O.comparing pY) $ L.sortBy (O.comparing pX) points
-    sortedPoints         = firstPoint : L.sortBy (flip (O.comparing polarAngle)) (tail pointsByYValue)
+    sortedPoints         = firstPoint : L.sortBy (flip $ O.comparing polarAngle) (tail pointsByYValue)
       where
         polarAngle point   = angleBetween firstPoint (Point (pX point) 0) point
         angleBetween a b c = acos $ top / bottom
