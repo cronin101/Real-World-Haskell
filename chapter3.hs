@@ -127,3 +127,62 @@ treeHeight (Node this left right) = 1 + longestRemainingPath
     longestRemainingPath          = max leftHeight rightHeight
     leftHeight                    = treeHeight left
     rightHeight                   = treeHeight right
+
+--Consider three two-dimensional points a, b, and c.
+--If we look at the angle formed by the line segment from a to b and the line segment from b to c, it either turns left, turns right, or forms a straight line.
+--Define a Direction data type that lets you represent these possibilities.
+data Point = Point {
+  pX :: Int,
+  pY :: Int
+} deriving (Show)
+
+data Direction = LeftTurn
+               | StraightOn
+               | RightTurn
+  deriving (Show, Eq)
+
+calculateDirection :: Point -> Point -> Point -> Direction
+calculateDirection a b c
+  | crossProductDirection > 0 = LeftTurn
+  | crossProductDirection < 0 = RightTurn
+  | otherwise                 = StraightOn
+    where
+      crossProductDirection   = ((x2 - x1) * (y3 - y1)) - ((y2 - y1) * (x3 - x1))
+        where
+          x1                  = pX(a)
+          x2                  = pX(b)
+          x3                  = pX(c)
+          y1                  = pY(a)
+          y2                  = pY(b)
+          y3                  = pY(c)
+
+--Define a function that takes a list of 2D points and computes the direction of each successive triple.
+tripleDirections :: [Point] -> [Direction]
+tripleDirections (a:b:c:[])   = [calculateDirection a b c]
+tripleDirections (a:b:c:rest) = (calculateDirection a b c) : tripleDirections (b:c:rest)
+
+--Using the code from the preceding three exercises, implement Graham's scan algorithm for the convex hull of a set of 2D points.
+grahamScan :: [Point] -> [Point]
+grahamScan points = firstPoint : scan sortedPoints
+  where
+    scan (a:b:c:[])
+      | isLeftTurn a b c = [b]
+      | otherwise        = []
+    scan (a:b:c:rest)
+      | isLeftTurn a b c = (b : (scan (b:c:rest)))
+      | otherwise        = scan (a:c:rest)
+    isLeftTurn a b c     = (calculateDirection a b c) == LeftTurn
+    firstPoint           = head pointsByYValue
+    pointsByYValue       = L.sortBy (O.comparing pY) $ L.sortBy (O.comparing pX) points
+    sortedPoints         = firstPoint : (reverse $ L.sortBy (O.comparing polarAngle) (tail pointsByYValue))
+      where
+        polarAngle point   = angleBetween firstPoint (Point (pX point) 0) point
+        angleBetween a b c = acos $ top / bottom
+          where
+            top                          = fromIntegral $ dotProduct ba bc
+            bottom                       = magnitude(ba) * magnitude(bc)
+            dotProduct (x1, y1) (x2, y2) = (x1 * x2) + (y1 * y2)
+            magnitude (x, y)             = sqrt $ fromIntegral $ (x ^ 2) + (y ^ 2)
+            ba                           = (pX(a) - pX(b), pY(a) - pY(b))
+            bc                           = (pX(c) - pX(b), pY(c) - pY(b))
+
