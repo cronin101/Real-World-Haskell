@@ -55,3 +55,60 @@ asIntEither all@(x:xs)
           processChar acc x
             | C.isDigit x = fmap ((C.digitToInt x +) . (10 *)) acc
             | otherwise   = Left $ "Non-digit '" ++ [x] ++ "' detected"
+
+--Write your own definition of concat using foldr.
+concat :: [[a]] -> [a]
+concat = foldr (++) []
+
+--Write your own definition of the standard takeWhile function, first using
+--  explicit recursion, then foldr.
+takeRecursiveWhile :: (a -> Bool) -> [a] -> [a]
+takeRecursiveWhile _ [] = []
+takeRecursiveWhile predicate (x:xs)
+  | predicate x = x : takeRecursiveWhile predicate xs
+  | otherwise   = []
+
+takeFoldWhile :: (a -> Bool) -> [a] -> [a]
+takeFoldWhile = flip foldr [] . stepUnlessFalse
+  where
+    stepUnlessFalse predicate x acc
+      | predicate x = x : acc
+      | otherwise   = []
+
+--Use ghci to load the Data.List module and figure out what groupBy does,
+--  then write your own implementation using a fold.
+myGroupByRec :: (a -> a -> Bool) ->  [a] -> [[a]]
+myGroupByRec e = groupHelper []
+  where
+    groupHelper acc [] = acc
+    groupHelper acc (x:xs)
+      | null acc    = groupHelper [[x]] xs
+      | e x current = groupHelper (init acc ++ [last acc ++ [x]]) xs
+      | otherwise   = groupHelper (acc ++ [[x]]) xs
+        where current = last $ last acc
+
+myGroupByFold :: (a -> a -> Bool) -> [a] -> [[a]]
+myGroupByFold e = foldr step []
+  where
+    step x acc
+      | null acc    = [[x]]
+      | e x current = (x : head acc) : tail acc
+      | otherwise   = [] : [x] : acc
+        where current = last $ last acc
+
+--How many of the following Prelude functions can you rewrite using list
+--  folds?
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny = (foldr (||) False .) . map
+
+myCycle :: [a] -> [a]
+myCycle [] = error "empty list"
+myCycle xs = foldr append [] [1..]
+  where
+    append _ acc = xs ++ acc
+
+myWords :: String -> [String]
+myWords = filter (not . (== " ")) . myGroupByFold (( . C.isSpace) . (==) . C.isSpace)
+
+myUnLines :: [String] -> String
+myUnLines =  foldr (( . ('\n' :)) . (++)) ""
